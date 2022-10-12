@@ -14,15 +14,46 @@
 
 // Execute `rustlings hint hashmaps3` or use the `hint` watch subcommand for a hint.
 
-// I AM NOT DONE
-
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 // A structure to store team name and its goal details.
 struct Team {
     name: String,
     goals_scored: u8,
     goals_conceded: u8,
+}
+
+fn insert_or_update(hash: &mut HashMap<String, Team>, team: Team) {
+    hash.entry(team.name.clone())
+        .and_modify(|f| {
+            f.goals_scored += team.goals_scored;
+            f.goals_conceded += team.goals_conceded;
+        })
+        .or_insert(team);
+}
+
+fn insert_or_update2(hash: &mut HashMap<String, Team>, team: Team) {
+    let entry = hash.entry(team.name.clone());
+    match entry {
+        std::collections::hash_map::Entry::Occupied(mut x) => {
+            let t = x.get_mut();
+            t.goals_scored += team.goals_scored;
+            t.goals_conceded += team.goals_conceded;
+        }
+        std::collections::hash_map::Entry::Vacant(_) => {
+            hash.insert(team.name.clone(), team);
+        }
+    }
+}
+
+fn insert_or_update3(hash: &mut HashMap<String, Team>, team: Team) {
+    let entry = hash.entry(team.name.clone()).or_insert(Team {
+        name: team.name.clone(),
+        goals_scored: 0,
+        goals_conceded: 0,
+    });
+    entry.goals_conceded += team.goals_conceded;
+    entry.goals_scored += team.goals_scored;
 }
 
 fn build_scores_table(results: String) -> HashMap<String, Team> {
@@ -36,12 +67,25 @@ fn build_scores_table(results: String) -> HashMap<String, Team> {
         let team_2_name = v[1].to_string();
         let team_2_score: u8 = v[3].parse().unwrap();
         // TODO: Populate the scores table with details extracted from the
-        // current line. Keep in mind that goals scored by team_1
-        // will be number of goals conceded from team_2, and similarly
-        // goals scored by team_2 will be the number of goals conceded by
-        // team_1.
+        let team1 = Team {
+            name: team_1_name.clone(),
+            goals_scored: team_1_score,
+            goals_conceded: team_2_score,
+        };
+        let team2 = Team {
+            name: team_2_name.clone(),
+            goals_scored: team_2_score,
+            goals_conceded: team_1_score,
+        };
+        insert_or_update3(&mut scores, team1);
+        insert_or_update3(&mut scores, team2);
     }
     scores
+}
+
+fn main() {
+    // Your program will start here.
+    println!("Hello world!");
 }
 
 #[cfg(test)]
